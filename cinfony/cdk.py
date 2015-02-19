@@ -44,7 +44,7 @@ else:
     try:
         _testmol = cdk.Molecule()
     except TypeError:
-        raise ImportError, "The CDK Jar file cannot be found."
+        raise ImportError("The CDK Jar file cannot be found.")
 
     #Exception wrappers for Jpype
     InvalidSmilesException = JavaException
@@ -64,7 +64,7 @@ def _getdescdict():
     return descdict
 
 _descdict = _getdescdict()
-descs = _descdict.keys()
+descs = list(_descdict.keys())
 """A list of supported descriptors"""
 _fingerprinters = {"daylight":cdk.fingerprint.Fingerprinter
                             , "graph":cdk.fingerprint.GraphOnlyFingerprinter
@@ -76,7 +76,7 @@ _fingerprinters = {"daylight":cdk.fingerprint.Fingerprinter
                             , "pubchem":cdk.fingerprint.PubchemFingerprinter
                             , "substructure":cdk.fingerprint.SubstructureFingerprinter
                             }
-fps = _fingerprinters.keys()
+fps = list(_fingerprinters.keys())
 """A list of supported fingerprint types"""
 _formats = {'smi': "SMILES" , 'sdf': "MDL SDF",
             'mol2': "MOL2", 'mol': "MDL MOL",
@@ -88,7 +88,7 @@ informats = dict([(_x, _formats[_x]) for _x in ['smi', 'sdf', 'mol', 'inchi']])
 _outformats = {'mol': cdk.io.MDLV2000Writer,
                'mol2': cdk.io.Mol2Writer,
                'sdf': cdk.io.SDFWriter}
-outformats = dict([(_x, _formats[_x]) for _x in _outformats.keys() + ['smi', 'inchi', 'inchikey']])
+outformats = dict([(_x, _formats[_x]) for _x in list(_outformats.keys()) + ['smi', 'inchi', 'inchikey']])
 """A dictionary of supported output formats"""
 forcefields = list(cdk.modeling.builder3d.ModelBuilder3D.getInstance().getFfTypes())
 """A list of supported forcefields"""
@@ -98,7 +98,7 @@ _isofact = cdk.config.IsotopeFactory.getInstance(cdk.ChemObject().getBuilder())
 _bondtypes = {1: cdk.CDKConstants.BONDORDER_SINGLE,
               2: cdk.CDKConstants.BONDORDER_DOUBLE,
               3: cdk.CDKConstants.BONDORDER_TRIPLE}
-_revbondtypes = dict([(_y,_x) for (_x,_y) in _bondtypes.iteritems()])
+_revbondtypes = dict([(_y,_x) for (_x,_y) in _bondtypes.items()])
 
 def _intvalue(integer):
     """Paper over some differences between JPype and Jython"""
@@ -133,7 +133,7 @@ def readfile(format, filename):
     """
     format = format.lower()
     if not os.path.isfile(filename):
-        raise IOError, "No such file: '%s'" % filename
+        raise IOError("No such file: '%s'" % filename)
     builder = cdk.DefaultChemObjectBuilder.getInstance()
     if format=="sdf":
         return (Molecule(mol) for mol in cdk.io.iterator.IteratingMDLReader(
@@ -154,7 +154,7 @@ def readfile(format, filename):
         manip = cdk.tools.manipulator.ChemFileManipulator
         return iter(Molecule(manip.getAllAtomContainers(chemfile)[0]),)
     else:
-        raise ValueError,"%s is not a recognised CDK format" % format
+        raise ValueError("%s is not a recognised CDK format" % format)
 
 def readstring(format, string):
     """Read in a molecule from a string.
@@ -175,11 +175,11 @@ def readstring(format, string):
         sp = cdk.smiles.SmilesParser(cdk.DefaultChemObjectBuilder.getInstance())
         try:
             ans = sp.parseSmiles(string)
-        except InvalidSmilesException, ex:
+        except InvalidSmilesException as ex:
             if sys.platform[:4] != "java":
                 #Jpype exception
                 ex = ex.message()
-            raise IOError, ex
+            raise IOError(ex)
         return Molecule(ans)
     elif format == 'inchi':
         factory = cdk.inchi.InChIGeneratorFactory.getInstance()
@@ -191,7 +191,7 @@ def readstring(format, string):
         manip = cdk.tools.manipulator.ChemFileManipulator
         return Molecule(manip.getAllAtomContainers(chemfile)[0])
     else:
-        raise ValueError,"%s is not a recognised CDK format" % format
+        raise ValueError("%s is not a recognised CDK format" % format)
 
 class Outputfile(object):
     """Represent a file to which *output* is to be sent.
@@ -213,9 +213,9 @@ class Outputfile(object):
         self.format = format.lower()
         self.filename = filename
         if not overwrite and os.path.isfile(self.filename):
-            raise IOError, "%s already exists. Use 'overwrite=True' to overwrite it." % self.filename
+            raise IOError("%s already exists. Use 'overwrite=True' to overwrite it." % self.filename)
         if not format in outformats:
-            raise ValueError,"%s is not a recognised CDK format" % format
+            raise ValueError("%s is not a recognised CDK format" % format)
         if self.format in ('smi','inchi', 'inchikey'):
             self._outputfile = open(self.filename, "w")
         else:
@@ -230,7 +230,7 @@ class Outputfile(object):
            molecule
         """
         if not self.filename:
-            raise IOError, "Outputfile instance is closed."
+            raise IOError("Outputfile instance is closed.")
         if self.format in ('smi','inchi', 'inchikey'):
             self._outputfile.write("%s\n" % molecule.write(format))
         else:
@@ -348,10 +348,10 @@ class Molecule(object):
         """
         format = format.lower()
         if format not in outformats:
-            raise ValueError,"%s is not a recognised CDK format" % format
+            raise ValueError("%s is not a recognised CDK format" % format)
 
         if filename is not None and not overwrite and os.path.isfile(filename):
-            raise IOError, "%s already exists. Use 'overwrite=True' to overwrite it." % filename
+            raise IOError("%s already exists. Use 'overwrite=True' to overwrite it." % filename)
 
         if format == "smi":
             sg = cdk.smiles.SmilesGenerator()
@@ -360,7 +360,7 @@ class Molecule(object):
             smiles = sg.createSMILES(self.Molecule)
             if filename:
                 output = open(filename, "w")
-                print >> output, smiles
+                print(smiles, file=output)
                 output.close()
                 return
             else:
@@ -397,7 +397,7 @@ class Molecule(object):
         if fp in _fingerprinters:
             fingerprinter = _fingerprinters[fp]()
         else:
-            raise ValueError, "%s is not a recognised CDK Fingerprint type" % fp
+            raise ValueError("%s is not a recognised CDK Fingerprint type" % fp)
         return Fingerprint(fingerprinter.getFingerprint(self.Molecule))
 
     def calcdesc(self, descnames=[]):
@@ -417,7 +417,7 @@ class Molecule(object):
             try:
                 desc = _descdict[descname]
             except KeyError:
-                raise ValueError, "%s is not a recognised CDK descriptor type" % descname
+                raise ValueError("%s is not a recognised CDK descriptor type" % descname)
             try:
                 value = desc.calculate(self.Molecule).getValue()
                 if hasattr(value, "get"): # Instead of array
@@ -427,10 +427,10 @@ class Molecule(object):
                     ans[descname] = value.doubleValue()
                 else:
                     ans[descname] = _intvalue(value)
-            except CDKException, ex:
+            except CDKException as ex:
                 # Can happen if molecule has no 3D coordinates
                 pass
-            except NullPointerException, ex:
+            except NullPointerException as ex:
                 # Happens with moment of inertia descriptor
                 pass
         return ans
@@ -563,7 +563,7 @@ class Fingerprint(object):
                 idx = self.fp.nextSetBit(idx + 1)
             return bits
         else:
-            raise AttributeError, "Fingerprint has no attribute %s" % attr
+            raise AttributeError("Fingerprint has no attribute %s" % attr)
     def __str__(self):
         return self.fp.toString()
 
@@ -666,7 +666,7 @@ class MoleculeData(object):
         return self._mol.getProperties()
     def _testforkey(self, key):
         if not key in self:
-            raise KeyError, "'%s'" % key
+            raise KeyError("'%s'" % key)
     def keys(self):
         return list(self._data().keySet())
     def values(self):
@@ -674,9 +674,9 @@ class MoleculeData(object):
     def items(self):
         return [(k, self[k]) for k in self._data().keySet()]
     def __iter__(self):
-        return iter(self.keys())
+        return iter(list(self.keys()))
     def iteritems(self):
-        return iter(self.items())
+        return iter(list(self.items()))
     def __len__(self):
         return len(self._data())
     def __contains__(self, key):
@@ -690,7 +690,7 @@ class MoleculeData(object):
     def has_key(self, key):
         return key in self
     def update(self, dictionary):
-        for k, v in dictionary.iteritems():
+        for k, v in dictionary.items():
             self[k] = v
     def __getitem__(self, key):
         self._testforkey(key)
@@ -698,7 +698,7 @@ class MoleculeData(object):
     def __setitem__(self, key, value):
         self._mol.setProperty(key, str(value))
     def __repr__(self):
-        return dict(self.iteritems()).__repr__()
+        return dict(iter(self.items())).__repr__()
 
 if __name__=="__main__": #pragma: no cover
     mol = readstring("smi", "CC(=O)Cl")
