@@ -1,3 +1,13 @@
+==========
+CinfonyPy3
+==========
+
+This is my attempt at porting Noel O'Boyle's Cinfony (see below) to Python 3.4.
+
+ChemLynx
+
+
+
 =======
 Cinfony
 =======
